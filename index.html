@@ -1,0 +1,607 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Article Summarizer - AI-Powered Text Summarization</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #78A2D2;
+            --primary-dark: #6890c0;
+            --secondary: #FEFFAF;
+            --accent: #254255;
+            --success: #10b981;
+            --error: #ef4444;
+            --bg-dark: #1a3a52;
+            --bg-card: #254255;
+            --text-primary: #FEFFAF;
+            --text-secondary: #b8d4ea;
+            --border: #4a6b82;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #78A2D2 0%, #254255 100%);
+            color: var(--text-primary);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 40px;
+            padding: 40px 20px;
+            background: var(--bg-card);
+            border-radius: 20px;
+            border: 1px solid var(--border);
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            background: linear-gradient(135deg, #FEFFAF, #ffffff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            color: var(--text-secondary);
+            font-size: 1.1rem;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 30px;
+        }
+
+        @media (min-width: 968px) {
+            .main-content {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+
+        .card {
+            background: var(--bg-card);
+            border-radius: 15px;
+            padding: 30px;
+            border: 1px solid var(--border);
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.2);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(120, 162, 210, 0.3);
+        }
+
+        .card h2 {
+            color: var(--primary);
+            margin-bottom: 20px;
+            font-size: 1.5rem;
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+
+        input[type="text"],
+        input[type="url"],
+        textarea,
+        select {
+            width: 100%;
+            padding: 12px 16px;
+            background: var(--bg-dark);
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            color: var(--text-primary);
+            font-size: 1rem;
+            transition: border-color 0.3s ease;
+        }
+
+        input:focus,
+        textarea:focus,
+        select:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        textarea {
+            min-height: 150px;
+            resize: vertical;
+            font-family: inherit;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .tab-btn {
+            flex: 1;
+            padding: 12px;
+            background: var(--bg-dark);
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 1rem;
+        }
+
+        .tab-btn.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        button {
+            width: 100%;
+            padding: 14px 24px;
+            background: linear-gradient(135deg, #FEFFAF, #d4e89e);
+            color: #254255;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        button:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(254, 255, 175, 0.4);
+        }
+
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .loader {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .loader.active {
+            display: block;
+        }
+
+        .spinner {
+            border: 4px solid var(--border);
+            border-top: 4px solid var(--primary);
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .result {
+            display: none;
+            animation: fadeIn 0.5s ease;
+        }
+
+        .result.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .summary-text {
+            background: var(--bg-dark);
+            padding: 20px;
+            border-radius: 8px;
+            border-left: 4px solid var(--primary);
+            line-height: 1.8;
+            margin-bottom: 20px;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .stat-item {
+            background: var(--bg-dark);
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .stat-label {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            margin-bottom: 5px;
+        }
+
+        .stat-value {
+            color: var(--primary);
+            font-size: 1.5rem;
+            font-weight: 600;
+        }
+
+        .error {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid var(--error);
+            color: var(--error);
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+            display: none;
+        }
+
+        .error.active {
+            display: block;
+            animation: shake 0.5s ease;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-10px); }
+            75% { transform: translateX(10px); }
+        }
+
+        .history-item {
+            background: var(--bg-dark);
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            border-left: 3px solid var(--primary);
+            cursor: pointer;
+            transition: transform 0.2s ease;
+        }
+
+        .history-item:hover {
+            transform: translateX(5px);
+        }
+
+        .history-meta {
+            display: flex;
+            justify-content: space-between;
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+            margin-bottom: 8px;
+        }
+
+        .history-summary {
+            color: var(--text-primary);
+            font-size: 0.95rem;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: var(--text-secondary);
+        }
+
+        .empty-state svg {
+            width: 80px;
+            height: 80px;
+            margin-bottom: 20px;
+            opacity: 0.3;
+        }
+
+        footer {
+            text-align: center;
+            margin-top: 40px;
+            padding: 20px;
+            color: var(--text-secondary);
+        }
+
+        footer a {
+            color: var(--primary);
+            text-decoration: none;
+        }
+
+        footer a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>📰 Article Summarizer</h1>
+            <p class="subtitle">AI-Powered Text Summarization with NLTK</p>
+        </header>
+
+        <div class="main-content">
+            <!-- Input Card -->
+            <div class="card">
+                <h2>✍️ Input</h2>
+                
+                <div class="tabs">
+                    <button class="tab-btn active" onclick="switchTab('url')">URL</button>
+                    <button class="tab-btn" onclick="switchTab('text')">Text</button>
+                </div>
+
+                <form id="summarizerForm">
+                    <!-- URL Tab -->
+                    <div id="urlTab" class="tab-content active">
+                        <div class="input-group">
+                            <label for="urlInput">Article URL</label>
+                            <input 
+                                type="url" 
+                                id="urlInput" 
+                                placeholder="https://example.com/article"
+                                autocomplete="off"
+                            >
+                        </div>
+                    </div>
+
+                    <!-- Text Tab -->
+                    <div id="textTab" class="tab-content">
+                        <div class="input-group">
+                            <label for="textInput">Raw Text</label>
+                            <textarea 
+                                id="textInput" 
+                                placeholder="Paste your article text here..."
+                            ></textarea>
+                        </div>
+                    </div>
+
+                    <div class="input-group">
+                        <label for="sentences">Number of Sentences</label>
+                        <select id="sentences">
+                            <option value="3">3 sentences</option>
+                            <option value="5" selected>5 sentences</option>
+                            <option value="7">7 sentences</option>
+                            <option value="10">10 sentences</option>
+                        </select>
+                    </div>
+
+                    <button type="submit" id="submitBtn">
+                        🚀 Generate Summary
+                    </button>
+                </form>
+
+                <div class="loader" id="loader">
+                    <div class="spinner"></div>
+                    <p>Analyzing and summarizing...</p>
+                </div>
+
+                <div class="error" id="error"></div>
+            </div>
+
+            <!-- Results Card -->
+            <div class="card">
+                <h2>📝 Summary</h2>
+                
+                <div class="result" id="result">
+                    <div class="summary-text" id="summaryText"></div>
+                    
+                    <div class="stats">
+                        <div class="stat-item">
+                            <div class="stat-label">Summary Length</div>
+                            <div class="stat-value" id="wordCount">0</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-label">Original Length</div>
+                            <div class="stat-value" id="originalLength">0</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-label">Reduction</div>
+                            <div class="stat-value" id="reduction">0%</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="empty-state" id="emptyState">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                    <p>Your summary will appear here</p>
+                </div>
+            </div>
+
+            <!-- History Card -->
+            <div class="card" style="grid-column: 1 / -1;">
+                <h2>🕒 Recent Summaries</h2>
+                <div id="historyContainer">
+                    <div class="empty-state">
+                        <p>No summaries yet. Generate your first summary above!</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <footer>
+            <p>Built with FastAPI + NLTK | <a href="http://localhost:8000/docs" target="_blank">API Docs</a></p>
+        </footer>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:8000';
+        let currentTab = 'url';
+
+        function switchTab(tab) {
+            currentTab = tab;
+            
+            // Update tab buttons
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+            
+            // Update tab content
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            document.getElementById(`${tab}Tab`).classList.add('active');
+        }
+
+        function showLoader() {
+            document.getElementById('loader').classList.add('active');
+            document.getElementById('submitBtn').disabled = true;
+            document.getElementById('error').classList.remove('active');
+            document.getElementById('result').classList.remove('active');
+        }
+
+        function hideLoader() {
+            document.getElementById('loader').classList.remove('active');
+            document.getElementById('submitBtn').disabled = false;
+        }
+
+        function showError(message) {
+            const errorDiv = document.getElementById('error');
+            errorDiv.textContent = message;
+            errorDiv.classList.add('active');
+            hideLoader();
+        }
+
+        function showResult(data) {
+            document.getElementById('emptyState').style.display = 'none';
+            document.getElementById('result').classList.add('active');
+            
+            document.getElementById('summaryText').textContent = data.summary;
+            document.getElementById('wordCount').textContent = data.word_count;
+            document.getElementById('originalLength').textContent = data.original_length;
+            
+            const reduction = ((1 - data.word_count / data.original_length) * 100).toFixed(1);
+            document.getElementById('reduction').textContent = `${reduction}%`;
+            
+            hideLoader();
+            loadHistory();
+        }
+
+        async function loadHistory() {
+            try {
+                const response = await fetch(`${API_BASE}/history?limit=5`);
+                const data = await response.json();
+                
+                const container = document.getElementById('historyContainer');
+                
+                if (data.history && data.history.length > 0) {
+                    container.innerHTML = data.history.map(item => `
+                        <div class="history-item" onclick="showHistoryItem(${item.id})">
+                            <div class="history-meta">
+                                <span>${item.source_type === 'url' ? '🌐 URL' : '📝 Text'}</span>
+                                <span>${new Date(item.created_at).toLocaleString()}</span>
+                            </div>
+                            <div class="history-summary">${item.summary}</div>
+                        </div>
+                    `).join('');
+                } else {
+                    container.innerHTML = '<div class="empty-state"><p>No summaries yet.</p></div>';
+                }
+            } catch (error) {
+                console.error('Failed to load history:', error);
+            }
+        }
+
+        function showHistoryItem(id) {
+            fetch(`${API_BASE}/history`)
+                .then(res => res.json())
+                .then(data => {
+                    const item = data.history.find(h => h.id === id);
+                    if (item) {
+                        showResult({
+                            summary: item.summary,
+                            word_count: item.word_count,
+                            original_length: item.original_length
+                        });
+                    }
+                });
+        }
+
+        document.getElementById('summarizerForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            showLoader();
+            
+            const payload = {
+                sentences: parseInt(document.getElementById('sentences').value),
+                method: 'extractive'
+            };
+            
+            if (currentTab === 'url') {
+                const url = document.getElementById('urlInput').value.trim();
+                if (!url) {
+                    showError('Please enter a URL');
+                    return;
+                }
+                payload.url = url;
+            } else {
+                const text = document.getElementById('textInput').value.trim();
+                if (!text) {
+                    showError('Please enter some text');
+                    return;
+                }
+                if (text.length < 50) {
+                    showError('Text is too short. Please enter at least 50 characters.');
+                    return;
+                }
+                payload.text = text;
+            }
+            
+            try {
+                const response = await fetch(`${API_BASE}/summarize`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(payload)
+                });
+                
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.detail || 'Summarization failed');
+                }
+                
+                const data = await response.json();
+                showResult(data);
+                
+            } catch (error) {
+                showError(error.message || 'Failed to connect to API. Make sure the server is running.');
+            }
+        });
+
+        // Load history on page load
+        loadHistory();
+    </script>
+</body>
+</html>
